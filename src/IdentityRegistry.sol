@@ -1,24 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract ReputationRegistry {
-    struct Feedback {
-        uint256 fromAgentId;
-        uint256 toAgentId;
-        uint8 rating; // 0-100
+contract IdentityRegistry {
+    struct Agent {
+        uint256 agentId;
+        string agentDomain;
+        address agentAddress;
     }
 
-    Feedback[] public feedbacks;
+    uint256 public nextId = 1;
+    mapping(uint256 => Agent) public agents;
+    mapping(address => uint256) public addressToId;
 
-    event FeedbackGiven(uint256 fromAgentId, uint256 toAgentId, uint8 rating);
+    event AgentRegistered(uint256 agentId, string agentDomain, address agentAddress);
+    event AgentUpdated(uint256 agentId, string agentDomain, address agentAddress);
 
-    function giveFeedback(uint256 fromId, uint256 toId, uint8 rating) external {
-        require(rating <= 100, "Invalid rating");
-        feedbacks.push(Feedback(fromId, toId, rating));
-        emit FeedbackGiven(fromId, toId, rating);
+    function register(string memory domain) external returns (uint256) {
+        require(addressToId[msg.sender] == 0, "Already registered");
+        uint256 agentId = nextId++;
+        agents[agentId] = Agent(agentId, domain, msg.sender);
+        addressToId[msg.sender] = agentId;
+
+        emit AgentRegistered(agentId, domain, msg.sender);
+        return agentId;
     }
 
-    function getFeedbackCount() external view returns (uint256) {
-        return feedbacks.length;
+    function update(uint256 agentId, string memory newDomain) external {
+        Agent storage ag = agents[agentId];
+        require(ag.agentAddress == msg.sender, "Not your agent");
+        ag.agentDomain = newDomain;
+
+        emit AgentUpdated(agentId, newDomain, msg.sender);
+    }
+
+    function getAgent(uint256 agentId) external view returns (Agent memory) {
+        return agents[agentId];
     }
 }
