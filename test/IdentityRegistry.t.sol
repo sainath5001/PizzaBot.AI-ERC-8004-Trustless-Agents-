@@ -52,4 +52,21 @@ contract IdentityRegistryTest is Test {
         vm.expectRevert("Not your agent");
         registry.update(id, "hacker.bob");
     }
+
+    function testfuzzing() public {
+        // Fuzzing test to check for unexpected behavior
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        registry.update(id, "fuzzed.alice");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentDomain, "fuzzed.alice");
+
+        // Attempt to register a new agent with the same address
+        vm.startPrank(bob);
+        uint256 bobId = registry.register("agent.bob");
+        assertEq(bobId, 1); // Should be a new ID since bob is different
+        vm.stopPrank();
+    }
 }
