@@ -69,4 +69,13 @@ contract IdentityRegistryTest is Test {
         assertEq(bobId, 1); // Should be a new ID since bob is different
         vm.stopPrank();
     }
+
+    function testfuzzingWithInvalidData() public {
+        // Fuzzing test with invalid data
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.expectRevert("Invalid domain");
+        registry.update(id, ""); // Empty domain should revert
+        vm.stopPrank();
+    }
 }
