@@ -78,4 +78,22 @@ contract IdentityRegistryTest is Test {
         registry.update(id, ""); // Empty domain should revert
         vm.stopPrank();
     }
+
+    function testfuzzingWithEdgeCases() public {
+        // Fuzzing test with edge cases
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        registry.update(id, "edge.case.alice");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentDomain, "edge.case.alice");
+
+        // Attempt to register with a very long domain
+        vm.startPrank(bob);
+        string memory longDomain = "a".repeat(1000); // Assuming repeat function exists
+        vm.expectRevert("Invalid domain");
+        registry.register(longDomain);
+        vm.stopPrank();
+    }
 }
