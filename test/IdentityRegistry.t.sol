@@ -96,4 +96,37 @@ contract IdentityRegistryTest is Test {
         registry.register(longDomain);
         vm.stopPrank();
     }
+
+    function testfuzzingWithMultipleAgents() public {
+        // Fuzzing test with multiple agents
+        vm.startPrank(alice);
+        uint256 id1 = registry.register("agent.alice");
+        uint256 id2 = registry.register("agent.alice2");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag1 = registry.getAgent(id1);
+        IdentityRegistry.Agent memory ag2 = registry.getAgent(id2);
+
+        assertEq(ag1.agentDomain, "agent.alice");
+        assertEq(ag2.agentDomain, "agent.alice2");
+
+        // Update both agents
+        vm.startPrank(alice);
+        registry.update(id1, "updated.alice");
+        registry.update(id2, "updated.alice2");
+        vm.stopPrank();
+
+        ag1 = registry.getAgent(id1);
+        ag2 = registry.getAgent(id2);
+
+        assertEq(ag1.agentDomain, "updated.alice");
+        assertEq(ag2.agentDomain, "updated.alice2");
+    }
+
+    function testCannotRegisterWithEmptyDomain() public {
+        vm.startPrank(alice);
+        vm.expectRevert("Invalid domain");
+        registry.register(""); // Empty domain should revert
+        vm.stopPrank();
+    }
 }
