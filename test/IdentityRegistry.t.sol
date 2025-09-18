@@ -129,4 +129,25 @@ contract IdentityRegistryTest is Test {
         registry.register(""); // Empty domain should revert
         vm.stopPrank();
     }
+
+    function testfuzzingWithReverts() public {
+        // Fuzzing test to check for reverts
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.expectRevert("Not your agent");
+        registry.update(id, "hacker.bob"); // Should revert since it's not alice's agent
+        vm.stopPrank();
+    }
+
+    function testfuzzingWithMultipleUpdates() public {
+        // Fuzzing test with multiple updates
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        registry.update(id, "first.update.alice");
+        registry.update(id, "second.update.alice");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentDomain, "second.update.alice");
+    }
 }
