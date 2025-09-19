@@ -150,4 +150,31 @@ contract IdentityRegistryTest is Test {
         IdentityRegistry.Agent memory ag = registry.getAgent(id);
         assertEq(ag.agentDomain, "second.update.alice");
     }
+
+    function testfuzzingWithOwnershipTransfer() public {
+        // Fuzzing test with ownership transfer
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        // Transfer ownership to bob
+        vm.startPrank(bob);
+        registry.transferOwnership(id, bob);
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentAddress, bob);
+    }
+
+    function testfuzzingWithInvalidOwnershipTransfer() public {
+        // Fuzzing test with invalid ownership transfer
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        // Attempt to transfer ownership to an address that is not registered
+        vm.prank(bob);
+        vm.expectRevert("Not your agent");
+        registry.transferOwnership(id, bob);
+    }
 }
