@@ -177,4 +177,41 @@ contract IdentityRegistryTest is Test {
         vm.expectRevert("Not your agent");
         registry.transferOwnership(id, bob);
     }
+
+    function testfuzzingWithMultipleRegistrations() public {
+        // Fuzzing test with multiple registrations
+        vm.startPrank(alice);
+        uint256 id1 = registry.register("agent.alice");
+        uint256 id2 = registry.register("agent.alice2");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag1 = registry.getAgent(id1);
+        IdentityRegistry.Agent memory ag2 = registry.getAgent(id2);
+
+        assertEq(ag1.agentDomain, "agent.alice");
+        assertEq(ag2.agentDomain, "agent.alice2");
+
+        // Update both agents
+        vm.startPrank(alice);
+        registry.update(id1, "updated.alice");
+        registry.update(id2, "updated.alice2");
+        vm.stopPrank();
+
+        ag1 = registry.getAgent(id1);
+        ag2 = registry.getAgent(id2);
+
+        assertEq(ag1.agentDomain, "updated.alice");
+        assertEq(ag2.agentDomain, "updated.alice2");
+    }
+
+    function testfuzzingWithInvalidAgentId() public {
+        // Fuzzing test with invalid agent ID
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        // Attempt to get an agent with an invalid ID
+        vm.expectRevert("Agent does not exist");
+        registry.getAgent(id + 1); // Invalid ID should revert
+    }
 }
