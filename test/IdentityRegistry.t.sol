@@ -214,4 +214,50 @@ contract IdentityRegistryTest is Test {
         vm.expectRevert("Agent does not exist");
         registry.getAgent(id + 1); // Invalid ID should revert
     }
+
+    function testfuzzingWithAgentOwnership() public {
+        // Fuzzing test with agent ownership
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentAddress, alice);
+
+        // Attempt to update the agent domain
+        vm.startPrank(alice);
+        registry.update(id, "new.domain.alice");
+        vm.stopPrank();
+
+        ag = registry.getAgent(id);
+        assertEq(ag.agentDomain, "new.domain.alice");
+    }
+
+    function testfuzzingWithAgentNotFound() public {
+        // Fuzzing test with agent not found
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        // Attempt to get an agent that does not exist
+        vm.expectRevert("Agent does not exist");
+        registry.getAgent(id + 1); // Invalid ID should revert
+    }
+
+    function testfuzzingWithAgentDomainUpdate() public {
+        // Fuzzing test with agent domain update
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        registry.update(id, "updated.domain.alice");
+        vm.stopPrank();
+    }
+
+    function testfuzzingWithAgentDomainUpdateRevert() public {
+        // Fuzzing test with agent domain update revert
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.expectRevert("Invalid domain");
+        registry.update(id, ""); // Empty domain should revert
+        vm.stopPrank();
+    }
 }
