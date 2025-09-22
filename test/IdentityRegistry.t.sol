@@ -260,4 +260,28 @@ contract IdentityRegistryTest is Test {
         registry.update(id, ""); // Empty domain should revert
         vm.stopPrank();
     }
+
+    function testfuzzingWithAgentDomainUpdateOwnership() public {
+        // Fuzzing test with agent domain update ownership
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        vm.stopPrank();
+
+        // Attempt to update the agent domain as bob
+        vm.prank(bob);
+        vm.expectRevert("Not your agent");
+        registry.update(id, "hacker.bob");
+    }
+
+    function testfuzzingWithAgentDomainUpdateMultiple() public {
+        // Fuzzing test with multiple agent domain updates
+        vm.startPrank(alice);
+        uint256 id = registry.register("agent.alice");
+        registry.update(id, "first.update.alice");
+        registry.update(id, "second.update.alice");
+        vm.stopPrank();
+
+        IdentityRegistry.Agent memory ag = registry.getAgent(id);
+        assertEq(ag.agentDomain, "second.update.alice");
+    }
 }
